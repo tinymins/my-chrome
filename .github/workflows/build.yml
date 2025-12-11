@@ -15,6 +15,9 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
@@ -151,7 +154,7 @@ jobs:
 
           $lines = Get-Content -Path $changelogPath
           $escapedVersion = [regex]::Escape($version)
-          $headingPattern = "^##\s+.*\b$escapedVersion\b"
+          $headingPattern = "^##\s+.*\bv$escapedVersion\b"
 
           $startIndex = $null
           for ($i = 0; $i -lt $lines.Count; $i++) {
