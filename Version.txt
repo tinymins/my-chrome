@@ -1,7 +1,7 @@
 ﻿
-latest=3.8.1
-url=http://code.taobao.org/svn/mychrome/trunk/release/MyChrome_v3.8.1.7z
-url_x64=http://code.taobao.org/svn/mychrome/trunk/release/MyChrome_v3.8.1_x64.7z
-update=1. 修正近期 Stable/Beta/Dev 无法更新的问题。\n2. 去掉查找Google IP功能，要从google更新浏览器请自备FQ工具，或者选择从sina更新。
-update_zh-TW=修正近期 Stable/Beta/Dev 无法更新的問題。
-update_en-US=Fixed update problems of Stable/Beta/Dev channel.
+latest=3.9.0
+url=https://github.com/tinymins/my-chrome/releases/download/v3.9.0/MyChrome.zip
+url_x64=https://github.com/tinymins/my-chrome/releases/download/v3.9.0/MyChrome_x64.zip
+update=增加 Chrome 自动更新的功能
+update_zh-TW=增加 Chrome 自動更新的功能
+update_en-US=Added Chrome auto-update feature.
