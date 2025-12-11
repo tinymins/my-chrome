@@ -54,6 +54,7 @@ Global $CacheDir, $CacheSize, $PortableParam
 Global $ChromeSource = "Google", $get_latest_chrome_ver = "get_latest_chrome_ver"
 Global $LastCheckUpdate, $UpdateInterval, $Channel, $IsUpdating = 0, $x86 = 0
 Global $AppUpdate, $AppUpdateLastCheck
+Global $AutoUpdate, $UpdatePostAction
 Global $RunInBackground, $ExApp, $ExAppAutoExit, $ExApp2, $AppPID_Browser, $ExAppPID
 Global $TaskBarDir = @AppDataDir & "\Microsoft\Internet Explorer\Quick Launch\User Pinned\TaskBar"
 Global $TaskBarLastChange
@@ -67,7 +68,7 @@ Global $CancelAppUpdate
 Global $hSettings, $SettingsOK
 Global $hSettingsOK, $hSettingsApply, $hStausbar
 Global $hChromePath, $hGetChromePath, $hChromeSource, $hCheckUpdate
-Global $hChannel, $hx86, $hUpdateInterval, $hLatestChromeVer, $hCurrentVer, $hUserDataDir, $hCopyData, $hUrlList
+Global $hChannel, $hx86, $hUpdateInterval, $hAutoUpdate, $hUpdatePostAction, $hLatestChromeVer, $hCurrentVer, $hUserDataDir, $hCopyData, $hUrlList
 Global $hAppUpdate, $hCacheDir, $hSelectCacheDir, $hCacheSize
 Global $hParams, $hDownloadThreads, $hProxyType, $hProxySever, $hProxyPort
 Global $hRunInBackground, $hLanguage, $hExApp, $hExAppAutoExit, $hExApp2
@@ -149,6 +150,8 @@ If Not FileExists($inifile) Then
 	IniWrite($inifile, "Settings", "Params", "")
 	IniWrite($inifile, "Settings", "RunInBackground", 1)
 	IniWrite($inifile, "Settings", "AppUpdate", 1)
+	IniWrite($inifile, "Settings", "AutoUpdate", 0)
+	IniWrite($inifile, "Settings", "UpdatePostAction", 2)
 	IniWrite($inifile, "Settings", "AppUpdateLastCheck", "2016/05/01 00:00:00")
 	IniWrite($inifile, "Settings", "CheckDefaultBrowser", 1)
 	IniWrite($inifile, "Settings", "ExApp", "")
@@ -184,7 +187,11 @@ $DownloadThreads = IniRead($inifile, "Settings", "DownloadThreads", 3) * 1
 $Params = IniRead($inifile, "Settings", "Params", "")
 $RunInBackground = IniRead($inifile, "Settings", "RunInBackground", 1) * 1
 $AppUpdate = IniRead($inifile, "Settings", "AppUpdate", 1) * 1
+$AutoUpdate = IniRead($inifile, "Settings", "AutoUpdate", 0) * 1
+$UpdatePostAction = IniRead($inifile, "Settings", "UpdatePostAction", 0) * 1
 $AppUpdateLastCheck = IniRead($inifile, "Settings", "AppUpdateLastCheck", "2016/05/01 00:00:00")
+$UpdatePostAction = Int($UpdatePostAction)
+If $UpdatePostAction < 0 Or $UpdatePostAction > 2 Then $UpdatePostAction = 0
 $CheckDefaultBrowser = IniRead($inifile, "Settings", "CheckDefaultBrowser", 1) * 1
 $ExApp = IniRead($inifile, "Settings", "ExApp", "")
 $ExAppAutoExit = IniRead($inifile, "Settings", "ExAppAutoExit", 1) * 1
@@ -1276,7 +1283,7 @@ Func Settings()
 	$ChromeLastChange = GetChromeLastChange($ChromeDir & "\chrome.dll")
 
 	Opt("ExpandEnvStrings", 0)
-	$hSettings = GUICreate(lang("GUI", "Title", 'MyChrome - 打造自己的 Google Chrome 便携版'), 500, 530)
+	$hSettings = GUICreate(lang("GUI", "Title", 'MyChrome - 打造自己的 Google Chrome 便携版'), 500, 555)
 	GUISetOnEvent($GUI_EVENT_CLOSE, "ExitApp")
 	Local $LangCopyright = lang("GUI", "Copyright", 'MyChrome %s by 甲壳虫 <jdchenjian@gmail.com>')
 	$LangCopyright = StringFormat($LangCopyright, $AppVersion)
@@ -1287,10 +1294,10 @@ Func Settings()
 	GUICtrlSetOnEvent(-1, "OpenWebsite")
 
 	;Tab General
-	GUICtrlCreateTab(5, 35, 492, 430)
+	GUICtrlCreateTab(5, 35, 492, 455)
 	GUICtrlCreateTabItem(lang("GUI", "TabGeneral", '常规'))
 
-	GUICtrlCreateGroup(lang("GUI", "GroupChromeApp", 'Google Chrome 程序文件'), 10, 80, 480, 190)
+	GUICtrlCreateGroup(lang("GUI", "GroupChromeApp", 'Google Chrome 程序文件'), 10, 80, 480, 215)
 	GUICtrlCreateLabel(lang("GUI", "ChromePath", 'Chrome 路径：'), 20, 110, 120, 20)
 	$hChromePath = GUICtrlCreateEdit($ChromePath, 130, 106, 290, 20, $ES_AUTOHSCROLL)
 
@@ -1320,6 +1327,25 @@ Func Settings()
 			$LangIntvEveryDay, $LangIntvEveryWeek, $LangIntvNever)
 	GUICtrlSetData(-1, $var, $UpdateInterval)
 
+	$hAutoUpdate = GUICtrlCreateCheckbox(lang("GUI", "AutoUpdate", '自动下载浏览器更新'), 20, 260, 180, 20)
+	GUICtrlSetOnEvent($hAutoUpdate, "GUI_SetUpdatePostAction")
+	If $AutoUpdate Then GUICtrlSetState($hAutoUpdate, $GUI_CHECKED)
+
+	Local $LangPostPrompt = lang("GUI", "PostUpdatePrompt", '更新完成后，显示完成对话框')
+	Local $LangPostRestart = lang("GUI", "PostUpdateRestart", '更新完成后，自动重启浏览器')
+	Local $LangPostNextLaunch = lang("GUI", "PostUpdateNextLaunch", '更新完成后，下次启动浏览器时应用')
+	$hUpdatePostAction = GUICtrlCreateCombo("", 200, 260, 280, 20, $CBS_DROPDOWNLIST)
+	Local $postOptions = $LangPostPrompt & "|" & $LangPostRestart & "|" & $LangPostNextLaunch
+	Local $postDefault = $LangPostPrompt
+	Switch $UpdatePostAction
+		Case 1
+			$postDefault = $LangPostRestart
+		Case 2
+			$postDefault = $LangPostNextLaunch
+	EndSwitch
+	GUICtrlSetData(-1, $postOptions, $postDefault)
+	GUI_SetUpdatePostAction()
+
 	$hCheckUpdate = GUICtrlCreateButton(lang("GUI", "UpdateNow", '立即更新'), 360, 170, 120, 24)
 	GUICtrlSetOnEvent(-1, "GUI_Start_End_ChromeUpdate")
 
@@ -1334,20 +1360,20 @@ Func Settings()
 	$hCurrentVer = GUICtrlCreateLabel("", 380, 235, 110, 40)
 	GUICtrlSetData(-1, $ChromeFileVersion & "  " & $ChromeLastChange)
 
-	GUICtrlCreateGroup(lang("GUI", "ChromeUserData", 'Google Chrome 用户数据文件'), 10, 290, 480, 80)
-	GUICtrlCreateLabel(lang("GUI", "UserDataDir", '用户数据文件夹：'), 20, 320, 110, 20)
-	$hUserDataDir = GUICtrlCreateEdit($UserDataDir, 130, 315, 290, 20, $ES_AUTOHSCROLL)
-	GUICtrlCreateButton(lang("GUI", "Browse", '浏览'), 430, 315, 50, 20)
+	GUICtrlCreateGroup(lang("GUI", "ChromeUserData", 'Google Chrome 用户数据文件'), 10, 305, 480, 80)
+	GUICtrlCreateLabel(lang("GUI", "UserDataDir", '用户数据文件夹：'), 20, 335, 110, 20)
+	$hUserDataDir = GUICtrlCreateEdit($UserDataDir, 130, 330, 290, 20, $ES_AUTOHSCROLL)
+	GUICtrlCreateButton(lang("GUI", "Browse", '浏览'), 430, 330, 50, 20)
 	GUICtrlSetOnEvent(-1, "GUI_GetUserDataDir")
-	$hCopyData = GUICtrlCreateCheckbox(lang("GUI", "CopyDataFromeSys", '从系统中提取用户数据文件'), 20, 340, -1, 20)
+	$hCopyData = GUICtrlCreateCheckbox(lang("GUI", "CopyDataFromeSys", '从系统中提取用户数据文件'), 20, 355, -1, 20)
 
 	If Not $LangFile Then
 		$langstr = "显示语言："
 	Else
 		$langstr = "Language: "
 	EndIf
-	GUICtrlCreateLabel($langstr, 20, 390, 110, 20)
-	$hLanguage = GUICtrlCreateCombo("", 130, 386, 130, 20, $CBS_DROPDOWNLIST)
+	GUICtrlCreateLabel($langstr, 20, 405, 110, 20)
+	$hLanguage = GUICtrlCreateCombo("", 130, 401, 130, 20, $CBS_DROPDOWNLIST)
 	If $Language = "zh-CN" Then
 		$sLang = "简体中文"
 	ElseIf $Language = "zh-TW" Then
@@ -1360,17 +1386,17 @@ Func Settings()
 	GUICtrlSetData(-1, "Auto|简体中文|繁體中文|English", $sLang)
 	GUICtrlSetOnEvent(-1, "GUI_LanguageEvent")
 
-	GUICtrlCreateLabel(lang("GUI", "LangSupport", '语言支持：'), 280, 390, 110, 20)
-	GUICtrlCreateLabel(IniRead($LangFile, "Lang", "LangSupport", ""), 390, 390, 100, 40)
+	GUICtrlCreateLabel(lang("GUI", "LangSupport", '语言支持：'), 280, 405, 110, 20)
+	GUICtrlCreateLabel(IniRead($LangFile, "Lang", "LangSupport", ""), 390, 405, 100, 40)
 	GUICtrlSetCursor(-1, 0)
 	GUICtrlSetColor(-1, 0x0000FF)
 	GUICtrlSetOnEvent(-1, "GUI_LangSupport")
 
-	$hAppUpdate = GUICtrlCreateCheckbox(lang("GUI", "NotifyMyChromeUpdate", 'MyChrome 发布新版时通知我'), 20, 415, -1, 20)
+	$hAppUpdate = GUICtrlCreateCheckbox(lang("GUI", "NotifyMyChromeUpdate", 'MyChrome 发布新版时通知我'), 20, 430, -1, 20)
 	If $AppUpdate Then
 		GUICtrlSetState($hAppUpdate, $GUI_CHECKED)
 	EndIf
-	$hRunInBackground = GUICtrlCreateCheckbox(lang("GUI", "MyChromeRunInBackground", 'MyChrome 在后台运行直至浏览器退出'), 20, 440, -1, 20)
+	$hRunInBackground = GUICtrlCreateCheckbox(lang("GUI", "MyChromeRunInBackground", 'MyChrome 在后台运行直至浏览器退出'), 20, 455, -1, 20)
 	GUICtrlSetOnEvent(-1, "GUI_RunInBackground")
 	If $RunInBackground Then
 		GUICtrlSetState($hRunInBackground, $GUI_CHECKED)
@@ -1547,12 +1573,12 @@ Func Settings()
 	EndIf
 
 	GUICtrlCreateTabItem("")
-	$hSettingsOK = GUICtrlCreateButton(lang("GUI", "OK", '确定'), 260, 480, 70, 20)
+	$hSettingsOK = GUICtrlCreateButton(lang("GUI", "OK", '确定'), 260, 505, 70, 20)
 	GUICtrlSetOnEvent(-1, "GUI_SettingsOK")
 	GUICtrlSetState(-1, $GUI_FOCUS)
-	GUICtrlCreateButton(lang("GUI", "Cancel", '取消'), 340, 480, 70, 20)
+	GUICtrlCreateButton(lang("GUI", "Cancel", '取消'), 340, 505, 70, 20)
 	GUICtrlSetOnEvent(-1, "ExitApp")
-	$hSettingsApply = GUICtrlCreateButton(lang("GUI", "Apply", '应用'), 420, 480, 70, 20)
+	$hSettingsApply = GUICtrlCreateButton(lang("GUI", "Apply", '应用'), 420, 505, 70, 20)
 	GUICtrlSetOnEvent(-1, "GUI_SettingsApply")
 	$LangSettingsTips = StringFormat(lang("GUI", "SettingsTips", '双击软件目录下的 "%s.vbs" 文件可显示此窗口'), $AppName)
 	$hStausbar = _GUICtrlStatusBar_Create($hSettings, -1, $LangSettingsTips)
@@ -1745,6 +1771,16 @@ Func GUI_Eventx86()
 	AdlibRegister("GUI_ShowLatestChromeVer", 10)
 EndFunc   ;==>GUI_Eventx86
 
+Func GUI_SetUpdatePostAction()
+	If $hUpdatePostAction = 0 Then Return
+	Local $enabled = (GUICtrlRead($hAutoUpdate) = $GUI_CHECKED)
+	If $enabled Then
+		GUICtrlSetState($hUpdatePostAction, $GUI_ENABLE)
+	Else
+		GUICtrlSetState($hUpdatePostAction, $GUI_DISABLE)
+	EndIf
+EndFunc   ;==>GUI_SetUpdatePostAction
+
 Func GUI_AddExApp()
 	Local $path
 	$path = FileOpenDialog(lang("GUI", "ChooseExApp", '选择外部程序'), @ScriptDir, _
@@ -1872,6 +1908,23 @@ Func GUI_SettingsApply()
 		$AppUpdate = 0
 	EndIf
 
+	If GUICtrlRead($hAutoUpdate) = $GUI_CHECKED Then
+		$AutoUpdate = 1
+	Else
+		$AutoUpdate = 0
+	EndIf
+	Local $LangPostPrompt = lang("GUI", "PostUpdatePrompt", '更新完成后，显示完成对话框')
+	Local $LangPostRestart = lang("GUI", "PostUpdateRestart", '更新完成后，自动重启浏览器')
+	Local $LangPostNextLaunch = lang("GUI", "PostUpdateNextLaunch", '更新完成后，下次启动浏览器时应用')
+	Switch GUICtrlRead($hUpdatePostAction)
+		Case $LangPostRestart
+			$UpdatePostAction = 1
+		Case $LangPostNextLaunch
+			$UpdatePostAction = 2
+		Case Else
+			$UpdatePostAction = 0
+	EndSwitch
+
 	If GUICtrlRead($hRunInBackground) = $GUI_CHECKED Then
 		$RunInBackground = 1
 	Else
@@ -1916,6 +1969,8 @@ Func GUI_SettingsApply()
 	IniWrite($inifile, "Settings", "CacheSize", $CacheSize)
 	IniWrite($inifile, "Settings", "RunInBackground", $RunInBackground)
 	IniWrite($inifile, "Settings", "AppUpdate", $AppUpdate)
+	IniWrite($inifile, "Settings", "AutoUpdate", $AutoUpdate)
+	IniWrite($inifile, "Settings", "UpdatePostAction", $UpdatePostAction)
 	IniWrite($inifile, "Settings", "ProxyType", $ProxyType)
 	IniWrite($inifile, "Settings", "UpdateProxy", $ProxySever)
 	IniWrite($inifile, "Settings", "UpdatePort", $ProxyPort)
@@ -2390,9 +2445,13 @@ Func UpdateChrome($ChromePath, $Channel, $strUrl = "")
 	Local $LangUpdateTips = lang("Update", "UpdateTips", _
 			'Google Chrome (%s) 可以更新，是否立即下载？\n\n最新版本：\t%s\n您的版本：\t%s  %s')
 	Local $info = StringFormat($LangUpdateTips, $Channel, $LatestChromeVer, $ChromeFileVersion, $ChromeLastChange)
-	$msg = 6
+	Local $msg = 6
 	If Not IsHWnd($hSettings) Then
-		$msg = MsgBox(68, 'MyChrome', $info)
+		If $AutoUpdate Then
+			$msg = 6
+		Else
+			$msg = MsgBox(68, 'MyChrome', $info)
+		EndIf
 	EndIf
 	If $msg <> 6 Then ; not YES
 		EndUpdate()
@@ -3193,11 +3252,54 @@ Func InstallChrome($ChromeInstaller = "")
 	DirMove($TempDir & "\Chrome-bin\" & $latest, $ChromeDir & "\~updated", 1)
 
 	; Copy chrome
-	$LangUpdateCloseChrome = lang("Update", "UpdateCloseChrome", _
+	Local $wasRunningBefore = AppIsRunning($ChromePath)
+	Local $effectivePostAction = $UpdatePostAction
+	If Not $AutoUpdate Then $effectivePostAction = 0
+	Local $autoAction = -1
+	Switch $effectivePostAction
+		Case 1
+			$autoAction = 6
+		Case 2
+			$autoAction = 7
+	EndSwitch
+	Local $LangUpdateCloseChrome = lang("Update", "UpdateCloseChrome", _
 			'是否关闭 Chrome 浏览器以完成更新？\n点击“是”强制关闭浏览器，点击“否”推迟到下次启动时应用更新。')
-	$ChromeIsRunning = ChromeIsRunning($ChromePath, StringFormat($LangUpdateCloseChrome, 0))
-	If $ChromeIsRunning Then Return
-	Return ApplyUpdate() ; 返回版本号
+	Local $ChromeIsRunning = ChromeIsRunning($ChromePath, StringFormat($LangUpdateCloseChrome, 0), $autoAction)
+	If $ChromeIsRunning Then
+		If $effectivePostAction = 2 Then
+			Local $LangDeferred = lang("Update", "DeferredNotification", '浏览器更新已下载，将在下次启动时自动应用。')
+			If IsHWnd($hSettings) Then
+				_GUICtrlStatusBar_SetText($hStausbar, $LangDeferred)
+			Else
+				If Not @TrayIconVisible Then
+					TraySetState(1)
+					TraySetClick(8)
+					TraySetToolTip("MyChrome")
+				EndIf
+				TrayTip("MyChrome", $LangDeferred, 5, 1)
+			EndIf
+		EndIf
+		Return
+	EndIf
+	Local $updatedVer = ApplyUpdate() ; 返回版本号
+	Local $shouldRestart = ($effectivePostAction = 1 And $wasRunningBefore <> 0)
+	If $shouldRestart Then
+		Local $LangRestartingChrome = lang("Update", "RestartingChrome", '浏览器更新已应用，正在重新启动 Chrome ...')
+		If IsHWnd($hSettings) Then
+			_GUICtrlStatusBar_SetText($hStausbar, $LangRestartingChrome)
+		Else
+			If Not @TrayIconVisible Then
+				TraySetState(1)
+				TraySetClick(8)
+				TraySetToolTip("MyChrome")
+			EndIf
+			TrayTip("MyChrome", $LangRestartingChrome, 5, 1)
+		EndIf
+		If Not AppIsRunning($ChromePath) Then
+			Run('"' & $ChromePath & '" ' & $PortableParam & ' ' & $Params, $ChromeDir)
+		EndIf
+	EndIf
+	Return $updatedVer
 EndFunc   ;==>InstallChrome
 
 
@@ -3221,8 +3323,18 @@ Func ApplyUpdate()
 		GUICtrlSetData($hCurrentVer, $ChromeFileVersion & "  " & $ChromeLastChange)
 	EndIf
 
-	$LangUpdatedTo = lang("Update", "UpdatedTo", "Google Chrome 浏览器已更新至 %s %s !")
-	MsgBox(64, "MyChrome", StringFormat($LangUpdatedTo, $ChromeFileVersion, $ChromeLastChange), 0, $hSettings)
+	Local $LangUpdatedTo = lang("Update", "UpdatedTo", "Google Chrome 浏览器已更新至 %s %s !")
+	Local $updatedMessage = StringFormat($LangUpdatedTo, $ChromeFileVersion, $ChromeLastChange)
+	If $AutoUpdate And $UpdatePostAction = 1 And Not IsHWnd($hSettings) Then
+		If Not @TrayIconVisible Then
+			TraySetState(1)
+			TraySetClick(8)
+			TraySetToolTip("MyChrome")
+		EndIf
+		TrayTip("MyChrome", $updatedMessage, 5, 1)
+	Else
+		MsgBox(64, "MyChrome", $updatedMessage, 0, $hSettings)
+	EndIf
 	DirRemove($ChromeDir & "\~updated", 1)
 	Return $ChromeFileVersion ; 返回版本号
 EndFunc   ;==>ApplyUpdate
@@ -3366,9 +3478,14 @@ Func AppIsRunning($AppPath)
 EndFunc   ;==>AppIsRunning
 
 ;~ 等待 chrome 浏览器关闭
-Func ChromeIsRunning($AppPath = "chrome.exe", $msg = "Do you want to close Chrome？")
+Func ChromeIsRunning($AppPath = "chrome.exe", $msg = "Do you want to close Chrome？", $autoAction = -1)
 	If Not AppIsRunning($AppPath) Then Return 0
-	$var = MsgBox(52, 'MyChrome', $msg, 0, $hSettings)
+	Local $var
+	If $autoAction = -1 Then
+		$var = MsgBox(52, 'MyChrome', $msg, 0, $hSettings)
+	Else
+		$var = $autoAction
+	EndIf
 	If $var <> 6 Then Return 1
 	$exe = StringRegExpReplace($AppPath, '.*\\', '')
 	For $j = 1 To 20
