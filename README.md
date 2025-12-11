@@ -1,12 +1,51 @@
-## 简介
+# MyChrome
 
-MyChrome 是Google Chrome的便携版引导器，
-1. 自定义Chrome浏览器程序文件、数据文件夹、缓存文件夹的位置等。
-2. 制作Chrome便携版，可设为默认浏览器。
-3. 便携版浏览器可自动更新，支持Stable / Beta / Dev / Canary / Chromium，可设置代{过}{滤}理服务器，支持多线程下载。
-4. 支持浏览器启动/退出时运行外部程序。
+## 概述
 
-![https://github.com/cnjackchen/my-chrome/blob/master/MyChrome_v3.7.gif](https://github.com/cnjackchen/my-chrome/blob/master/MyChrome_v3.7.gif)
+MyChrome 是一款用于 Google Chrome 的便携式启动器，可在无需安装的情况下部署和维护浏览器环境。借助 MyChrome，您可以灵活控制浏览器程序文件、用户数据以及缓存目录的位置，同时保持与官方版本一致的使用体验。
+
+![https://github.com/user-attachments/assets/24b60d70-95ef-4e61-a8d4-d7dd1ca05844](https://github.com/user-attachments/assets/24b60d70-95ef-4e61-a8d4-d7dd1ca05844)
+
+## 主要特性
+
+- 自定义程序、数据与缓存目录，满足不同磁盘或权限策略。
+- 一键构建 Chrome 便携版，可设置为系统默认浏览器。
+- 支持 Stable / Beta / Dev / Canary / Chromium 多通道版本自动更新，允许配置代理并启用多线程下载以加速获取。
+- 提供浏览器启动与退出钩子，可在关键节点调用外部脚本或工具。
+- 内置多语言资源，便于创建和维护本地化界面。
+
+## 下载与安装
+
+1. 前往 [Release](./release) 页面获取最新的 `MyChrome.zip` 或 `MyChrome_x64.zip` 压缩包。
+2. 解压至任意可读写目录，该目录将作为 `MyChrome` 和 `Google Chrome` 的工作根目录。
+3. 运行 `MyChrome.exe` 打开配置界面，根据需要调整路径与更新策略。
+4. 单击 `确定` 完成初始化设置。
+
+> 如需重新进入配置界面，双击根目录中的 `MyChrome.vbs` 即可。
+
+## 使用建议
+
+- 将浏览器程序目录与数据目录放置在同一便携设备中，便于整体迁移。
+- 针对多版本需求，可为不同渠道分别创建配置文件并独立维护。
+- 若使用代理或镜像，请确保网络策略允许访问所需更新源。
+
+## 多语言支持
+
+项目默认提供简体中文、繁体中文与英语界面。如需新增语言，请按照以下流程操作：
+
+1. 复制 `lang/en-US.ini` 或 `lang/zh-TW.ini` 作为模板。
+2. 根据目标语言翻译各条目，保存为新的语言文件。
+3. 在配置界面中选择新增语言即可生效。
+
+## 更新与发布说明
+
+- [更新日志](./CHANGELOG.md) 记录了每个版本的功能改进与修复。
+- 新版本发布后，可在配置界面中选择自动更新或手动触发更新流程。
+
+## 反馈与支持
+
+- 通过 [Issues](./issues) 提交缺陷报告或功能建议。
+- 提交反馈时，请附上使用的系统版本、MyChrome 版本以及相关日志，便于快速定位问题。
 
 ## License
 
@@ -17,32 +56,5 @@ the Free Software Foundation, either version 3 of the License, or
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
-
-## 最近更新
- **2017.03.12 v3.8.1**
-修正 Stable/Beta/Dev/Canary 分支的更新问题
-
-[更新历史](https://github.com/cnjackchen/my-chrome/wiki/History)
-
-## 下载
-https://github.com/cnjackchen/my-chrome/tree/master/release
- 
-32位系统只能用32位的MyChrome/Chrome；64位系统可用任意选择使用32/64位的MyChrome/Chrome。
-
-## 多语言
-简体中文，繁体中文，英语。如果您要翻译其他语言:
- 1. 选择英语或繁体中文。
- 2. 在`lang`文件夹中找到语言文件 `en-US.ini`或 `zh-TW.ini`。
- 3. 翻译`lang.ini`。
-
-## 使用说明
- 1. 下载并解压`MyChrome_vXX.7z`到任意位置。
- 2. 运行 `MyChrome.exe` 显示设置界面，如有必要修改设置。
- 3. 点击 `确定`... 就这么简单!
- 4. 以后如果要调用设置界面，双击`MyChrome.vbs`。
-
-## 问题反馈
- 1. [Issues](https://github.com/cnjackchen/my-chrome/issues)
- 2. [卡饭论坛的帖子](http://bbs.kafan.cn/thread-1725205-1-1.html)

@@ -5,7 +5,7 @@
 #AutoIt3Wrapper_UseX64=y
 #AutoIt3Wrapper_Res_Description=Google Chrome Portable
 #AutoIt3Wrapper_Res_Fileversion=3.8.1.0
-#AutoIt3Wrapper_Res_LegalCopyright=甲壳虫<jdchenjian@gmail.com>
+#AutoIt3Wrapper_Res_LegalCopyright=甲壳虫<jdchenjian@gmail.com>,茗伊<tinymins@gmail.com>
 #AutoIt3Wrapper_Res_Language=1033
 #AutoIt3Wrapper_AU3Check_Parameters=-q
 #AutoIt3Wrapper_Run_Au3Stripper=y
@@ -1161,7 +1161,7 @@ Func CheckAppUpdate()
 	Else
 		HttpSetProxy(2, $ProxySever & ":" & $ProxyPort)
 	EndIf
-	$UpdateInfo = BinaryToString(InetRead("http://code.taobao.org/svn/mychrome/trunk/Update.txt", 27), 4)
+	$UpdateInfo = BinaryToString(InetRead("https://raw.githubusercontent.com/tinymins/my-chrome/refs/heads/master/Version.txt", 27), 4)
 	$UpdateInfo = StringStripWS($UpdateInfo, 3)
 
 	$LangUpdateTips = lang("AppUpdate", "UpdateTips", _
@@ -1285,7 +1285,7 @@ Func Settings()
 	Opt("ExpandEnvStrings", 0)
 	$hSettings = GUICreate(lang("GUI", "Title", 'MyChrome - 打造自己的 Google Chrome 便携版'), 500, 555)
 	GUISetOnEvent($GUI_EVENT_CLOSE, "ExitApp")
-	Local $LangCopyright = lang("GUI", "Copyright", 'MyChrome %s by 甲壳虫 <jdchenjian@gmail.com>')
+	Local $LangCopyright = lang("GUI", "Copyright", 'MyChrome %s by 甲壳虫 <jdchenjian@gmail.com>\n二次修改 by 茗伊 <tinymins@gmail.com>')
 	$LangCopyright = StringFormat($LangCopyright, $AppVersion)
 	GUICtrlCreateLabel($LangCopyright, 5, 10, 490, -1, $SS_CENTER)
 	GUICtrlSetCursor(-1, 0)
@@ -1294,7 +1294,7 @@ Func Settings()
 	GUICtrlSetOnEvent(-1, "OpenWebsite")
 
 	;Tab General
-	GUICtrlCreateTab(5, 35, 492, 455)
+	GUICtrlCreateTab(5, 45, 492, 455)
 	GUICtrlCreateTabItem(lang("GUI", "TabGeneral", '常规'))
 
 	GUICtrlCreateGroup(lang("GUI", "GroupChromeApp", 'Google Chrome 程序文件'), 10, 80, 480, 215)
@@ -2230,7 +2230,7 @@ EndFunc   ;==>GUI_ShowLatestChromeVer
 
 ; 打开网站
 Func OpenWebsite()
-	ShellExecute("http://bbs.kafan.cn/thread-1725205-1-1.html")
+	ShellExecute("https://github.com/tinymins/my-chrome")
 EndFunc   ;==>OpenWebsite
 
 ;~ 显示下载地址
