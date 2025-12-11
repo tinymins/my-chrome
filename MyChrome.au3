@@ -1,4 +1,4 @@
-﻿#NoTrayIcon
+#NoTrayIcon
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
 #AutoIt3Wrapper_Icon=Icon_1.ico
 #AutoIt3Wrapper_Compile_Both=y
@@ -1198,7 +1198,7 @@ Func CheckAppUpdate()
 	Return $updated
 EndFunc   ;==>CheckAppUpdate
 Func UpdateApp($exe = @ScriptFullPath, $url = "")
-	Local $temp = @ScriptDir & "\MyChrome_temp"
+	Local $temp = @ScriptDir & "\MyChrome_Temp"
 	Local $file = $temp & "\MyChrome.7z"
 	Local $iBytesSize, $updated = 0
 	If Not FileExists($temp) Then DirCreate($temp)

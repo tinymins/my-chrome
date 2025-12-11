@@ -16,8 +16,8 @@ MyChrome 是一款用于 Google Chrome 的便携式启动器，可在无需安�
 
 ## 下载与安装
 
-1. 前往 [Release](https://github.com/tinymins/my-chrome/releases) 页面获取最新的 `MyChrome.zip` 或 `MyChrome_x64.zip` 压缩包。
-2. 解压至任意可读写目录，该目录将作为 `MyChrome` 和 `Google Chrome` 的工作根目录。
+1. 前往 [Release](https://github.com/tinymins/my-chrome/releases) 页面获取最新的 `MyChrome.7z` 或 `MyChrome_x64.7z` 压缩包。
+2. 使用 7-Zip 解压至任意可读写目录，该目录将作为 `MyChrome` 和 `Google Chrome` 的工作根目录。
 3. 运行 `MyChrome.exe` 打开配置界面，根据需要调整路径与更新策略。
 4. 单击 `确定` 完成初始化设置。
 

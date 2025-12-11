@@ -118,18 +118,31 @@ jobs:
       - name: Package the binaries
         shell: pwsh
         run: |
-          Compress-Archive -Path MyChrome.exe -DestinationPath MyChrome.zip -Force
+          $sevenZip = Join-Path $PWD '7zr.exe'
+          if (-not (Test-Path $sevenZip)) {
+            throw "7zr.exe not found at $sevenZip"
+          }
+
+          & $sevenZip a -t7z MyChrome.7z MyChrome.exe | Out-Host
+          if ($LASTEXITCODE -ne 0) {
+            throw "7zr.exe failed while creating MyChrome.7z"
+          }
 
           $tempDir = Join-Path $PWD 'dist_x64'
-          $zipPath64 = Join-Path $PWD 'MyChrome_x64.zip'
+          $archive64 = Join-Path $PWD 'MyChrome_x64.7z'
           New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
           Copy-Item -Path (Join-Path $PWD 'MyChrome_x64.exe') -Destination (Join-Path $tempDir 'MyChrome.exe') -Force
 
           Push-Location $tempDir
-          Compress-Archive -Path 'MyChrome.exe' -DestinationPath $zipPath64 -Force
+          & $sevenZip a -t7z $archive64 MyChrome.exe | Out-Host
+          $exitCode = $LASTEXITCODE
           Pop-Location
 
           Remove-Item $tempDir -Recurse -Force
+
+          if ($exitCode -ne 0) {
+            throw "7zr.exe failed while creating MyChrome_x64.7z"
+          }
 
       - name: Prepare release notes
         id: release_notes
@@ -199,5 +212,5 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            MyChrome.zip
-            MyChrome_x64.zip
+            MyChrome.7z
+            MyChrome_x64.7z
