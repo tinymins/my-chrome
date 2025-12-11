@@ -4,7 +4,7 @@
 #AutoIt3Wrapper_Compile_Both=y
 #AutoIt3Wrapper_UseX64=y
 #AutoIt3Wrapper_Res_Description=Google Chrome Portable
-#AutoIt3Wrapper_Res_Fileversion=3.9.0.0
+#AutoIt3Wrapper_Res_Fileversion=3.9.1.0
 #AutoIt3Wrapper_Res_LegalCopyright=甲壳虫<jdchenjian@gmail.com>,茗伊<tinymins@gmail.com>
 #AutoIt3Wrapper_Res_Language=1033
 #AutoIt3Wrapper_AU3Check_Parameters=-q
@@ -32,7 +32,7 @@
 #include "AppMute.au3"
 
 Global $WinVersion = _WinAPI_GetVersion()
-Global Const $AppVersion = "3.9.0" ; MyChrome version
+Global Const $AppVersion = "3.9.1" ; MyChrome version
 Global $AppName = StringRegExpReplace(@ScriptName, "\.[^.]*$", "")
 Global $inifile = @ScriptDir & "\" & $AppName & ".ini"
 Global $Language = IniRead($inifile, "Settings", "Language", "Auto")

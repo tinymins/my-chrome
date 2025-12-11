@@ -1,7 +1,7 @@
 ﻿
-latest=3.9.0
-url=https://github.com/tinymins/my-chrome/releases/download/v3.9.0/MyChrome.zip
-url_x64=https://github.com/tinymins/my-chrome/releases/download/v3.9.0/MyChrome_x64.zip
+latest=3.9.1
+url=https://github.com/tinymins/my-chrome/releases/download/v3.9.1/MyChrome.7z
+url_x64=https://github.com/tinymins/my-chrome/releases/download/v3.9.1/MyChrome_x64.7z
 update=增加 Chrome 自动更新的功能
 update_zh-TW=增加 Chrome 自動更新的功能
 update_en-US=Added Chrome auto-update feature.
