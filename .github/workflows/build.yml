@@ -1,0 +1,200 @@
+# This is a basic workflow to help you get started with Actions
+
+name: CI
+
+# Controls when the action will run.
+on:
+  # Triggers the workflow on push or pull request events but only for the master branch
+  push:
+    branches: [ master ]
+    tags:
+      - '*'
+  pull_request:
+    branches: [ master ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: windows-latest
+    if: startsWith(github.ref, 'refs/tags/')
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Cache AutoIt portable archives
+      - name: Cache AutoIt tools
+        id: cache-autoit
+        uses: actions/cache@v4
+        with:
+          path: |
+            autoit-v3.zip
+            SciTE4AutoIt3_Portable.zip
+          key: autoit-tools-v1
+
+      # Download archives when not cached
+      - name: Download AutoIt tools
+        if: steps.cache-autoit.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: |
+          curl -sSfLo autoit-v3.zip https://www.autoitscript.com/cgi-bin/getfile.pl?autoit3/autoit-v3.zip
+          curl -sSfLo SciTE4AutoIt3_Portable.zip https://www.autoitscript.com/cgi-bin/getfile.pl?../autoit3/scite/download/SciTE4AutoIt3_Portable.zip
+
+      # Install portable AutoIt and SciTE
+      - name: Install AutoIt3 and SciTE
+        shell: pwsh
+        run: |
+          $workspaceRoot = $PWD
+          $toolsRoot = Split-Path $workspaceRoot -Parent
+          $installRoot = Join-Path $toolsRoot 'AutoIt3'
+          $stagingRoot = Join-Path $toolsRoot 'install'
+
+          foreach ($path in @($installRoot, $stagingRoot)) {
+            if (Test-Path $path) {
+              Remove-Item $path -Recurse -Force
+            }
+          }
+
+          Expand-Archive -Path (Join-Path $workspaceRoot 'autoit-v3.zip') -DestinationPath $toolsRoot -Force
+
+          if (Test-Path $stagingRoot) {
+            Rename-Item -Path $stagingRoot -NewName 'AutoIt3'
+          }
+
+          $sciTePath = Join-Path $installRoot 'SciTE'
+          if (Test-Path $sciTePath) {
+            Remove-Item $sciTePath -Recurse -Force
+          }
+          Expand-Archive -Path (Join-Path $workspaceRoot 'SciTE4AutoIt3_Portable.zip') -DestinationPath $sciTePath -Force
+
+          $nestedSciTe = Join-Path $sciTePath 'SciTE'
+          if (Test-Path $nestedSciTe) {
+            Get-ChildItem $nestedSciTe -Force | Move-Item -Destination $sciTePath -Force
+            Remove-Item $nestedSciTe -Recurse -Force
+          }
+
+      # Runs build
+      - name: Run build
+        shell: pwsh
+        run: |
+          $workspaceRoot = $PWD
+          $autoItRoot = Join-Path (Split-Path $workspaceRoot -Parent) 'AutoIt3'
+          $autoItExe = Join-Path $autoItRoot 'AutoIt3.exe'
+          $wrapper = Join-Path $autoItRoot 'SciTE\AutoIt3Wrapper\AutoIt3Wrapper.au3'
+
+          if (-not (Test-Path $autoItExe)) { throw "AutoIt3.exe not found at $autoItExe" }
+          if (-not (Test-Path $wrapper)) { throw "AutoIt3Wrapper.au3 not found at $wrapper" }
+
+          & $autoItExe $wrapper /NoStatus /prod /in "MyChrome.au3" 2>&1 |
+            Tee-Object -Variable autoItOutput |
+            Out-Host
+
+          $exitCode = $LASTEXITCODE
+
+          if ($exitCode -ne 0) {
+            Write-Host "===== AutoIt3Wrapper output ====="
+            $autoItOutput | ForEach-Object { Write-Host $_ }
+            throw "AutoIt3Wrapper exited with code $exitCode"
+          }
+
+      # Check the output
+      - name: Check the output
+        shell: bash
+        run: |
+          ls -l
+
+      # Package 32-bit and 64-bit binaries separately
+      - name: Package the binaries
+        shell: pwsh
+        run: |
+          Compress-Archive -Path MyChrome.exe -DestinationPath MyChrome.zip -Force
+
+          $tempDir = Join-Path $PWD 'dist_x64'
+          $zipPath64 = Join-Path $PWD 'MyChrome_x64.zip'
+          New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
+          Copy-Item -Path (Join-Path $PWD 'MyChrome_x64.exe') -Destination (Join-Path $tempDir 'MyChrome.exe') -Force
+
+          Push-Location $tempDir
+          Compress-Archive -Path 'MyChrome.exe' -DestinationPath $zipPath64 -Force
+          Pop-Location
+
+          Remove-Item $tempDir -Recurse -Force
+
+      - name: Prepare release notes
+        id: release_notes
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+
+          if ([string]::IsNullOrWhiteSpace($tag)) {
+            throw "Git reference name is missing"
+          }
+
+          if (-not $tag.StartsWith('v')) {
+            throw "Expected tag to start with 'v', got '$tag'"
+          }
+
+          $version = $tag.Substring(1)
+          $changelogPath = Join-Path $PWD 'CHANGELOG.md'
+
+          if (-not (Test-Path $changelogPath)) {
+            throw "CHANGELOG.md not found at $changelogPath"
+          }
+
+          $lines = Get-Content -Path $changelogPath
+          $escapedVersion = [regex]::Escape($version)
+          $headingPattern = "^##\s+.*\b$escapedVersion\b"
+
+          $startIndex = $null
+          for ($i = 0; $i -lt $lines.Count; $i++) {
+            if ($lines[$i] -match $headingPattern) {
+              $startIndex = $i
+              break
+            }
+          }
+
+          if ($null -eq $startIndex) {
+            throw "Version $version not found in CHANGELOG.md"
+          }
+
+          $endIndex = $lines.Count - 1
+          for ($i = $startIndex + 1; $i -lt $lines.Count; $i++) {
+            if ($lines[$i] -match '^##\s+') {
+              $endIndex = $i - 1
+              break
+            }
+          }
+
+          $section = $lines[$startIndex..$endIndex]
+          $body = ($section -join "`n").Trim()
+
+          if ([string]::IsNullOrWhiteSpace($body)) {
+            throw "Release notes section for version $version is empty"
+          }
+
+          Write-Host "Found release notes for tag $tag"
+
+          $eofMarker = 'EOF'
+          "release_notes<<$eofMarker" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          $body | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          $eofMarker | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          body: ${{ steps.release_notes.outputs.release_notes }}
+          draft: false
+          prerelease: false
+          files: |
+            MyChrome.zip
+            MyChrome_x64.zip
