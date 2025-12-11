@@ -16,7 +16,7 @@ MyChrome 是一款用于 Google Chrome 的便携式启动器，可在无需安�
 
 ## 下载与安装
 
-1. 前往 [Release](./release) 页面获取最新的 `MyChrome.zip` 或 `MyChrome_x64.zip` 压缩包。
+1. 前往 [Release](https://github.com/tinymins/my-chrome/releases) 页面获取最新的 `MyChrome.zip` 或 `MyChrome_x64.zip` 压缩包。
 2. 解压至任意可读写目录，该目录将作为 `MyChrome` 和 `Google Chrome` 的工作根目录。
 3. 运行 `MyChrome.exe` 打开配置界面，根据需要调整路径与更新策略。
 4. 单击 `确定` 完成初始化设置。
@@ -39,12 +39,12 @@ MyChrome 是一款用于 Google Chrome 的便携式启动器，可在无需安�
 
 ## 更新与发布说明
 
-- [更新日志](./CHANGELOG.md) 记录了每个版本的功能改进与修复。
+- [更新日志](https://github.com/tinymins/my-chrome/CHANGELOG.md) 记录了每个版本的功能改进与修复。
 - 新版本发布后，可在配置界面中选择自动更新或手动触发更新流程。
 
 ## 反馈与支持
 
-- 通过 [Issues](./issues) 提交缺陷报告或功能建议。
+- 通过 [Issues](https://github.com/tinymins/my-chrome/issues) 提交缺陷报告或功能建议。
 - 提交反馈时，请附上使用的系统版本、MyChrome 版本以及相关日志，便于快速定位问题。
 
 ## License
